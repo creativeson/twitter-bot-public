@@ -2,7 +2,7 @@ import requests
 import tweepy
 import time
 import pandas as pd
-#from IPython.display import display
+
 
 api_key = my_secret
 api_key_secret = my_secret
@@ -18,8 +18,7 @@ big_en = opendata_url2
 small = opendata_url3
 small_en = opendataurl4
 
-def load():
-    #get data from central weather opendata api
+def load(): #get data from central weather opendata api
     response_s = requests.get(small)
     res_ch = response_s.json()
     response_b = requests.get(big)
@@ -89,8 +88,7 @@ def post_new():
 
     df['time'] = pd.to_datetime(df['time']) #change to datetime in order to sort
     df_sort = df.sort_values('time', ascending = False).reset_index(drop = True)
-    # new_s = df_sort['despriction'][0]
-    # new_s_uri = df_sort['uri'][0]
+    
 
     des = df_sort['despriction'][:6] #compare  6 rows of data from opendata
 
@@ -104,7 +102,7 @@ def post_new():
 
     a_set = set(posted)
     idx_b_minus_a = [idx for idx, val in enumerate(all_des) if val not in a_set]
-    idx_b_minus_a.reverse() #找出先發生的地震的索引值，才能依序發文
+    idx_b_minus_a.reverse() 
 #find out recent earthquake's index and in the order of happening time
     
     print(idx_b_minus_a) #the index of earthquake that are new and without tweet before
