@@ -1,35 +1,26 @@
-import pymongo
-
-client = pymongo.MongoClient("mongodb+srv://<secret>@cluster0.7wpz3kg.mongodb.net/?retryWrites=true&w=majority")
-db = client.earthquake
-collection = db['all_earthquake']
-
+import concurrent.futures
 import requests
 import tweepy
-import time
 import pandas as pd
+import reply_tweet as re
+import time as t
 
-
-api_key = secret
-api_key_secret = secret
-access_token = secret
-access_token_secret = secret
+api_key = 'AR92E'
+api_key_secret = 'snwd'
+access_token = 'ZfyK'
+access_token_secret = '2kTCF'
 
 auth = tweepy.OAuthHandler(api_key, api_key_secret)
 auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth, wait_on_rate_limit=True)
 
-big = secret
-big_en = secret
-small = secret
-small_en = secret
-
+big = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore'
+small = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore'
 
 def load():
     # get data from opendata api
     response_s = requests.get(small)
     res_ch = response_s.json()
-
     response_b = requests.get(big)
     res_b = response_b.json()
 
@@ -74,15 +65,11 @@ def load():
     df = pd.DataFrame(data)
     return df
 
-
-def post_new():
+def read_my_tweet():
     userID = "EarthquakeTwtw"
     tweets = api.user_timeline(screen_name=userID,
-                               # 200 is the maximum allowed count
-                               count=10,
+                               count=20,
                                include_rts=False,
-                               # Necessary to keep full_text
-                               # otherwise only the first 140 words are extracted
                                tweet_mode='extended')
     posted = []
     for info in tweets:
@@ -91,6 +78,11 @@ def post_new():
 
     print("我發過的")
     print(posted, end="\n ")
+    return posted
+
+def post_new(second):
+
+    posted = read_my_tweet()
 
     df = load()
 
@@ -108,7 +100,7 @@ def post_new():
 
     a_set = set(posted)
     idx_b_minus_a = [idx for idx, val in enumerate(all_des) if val not in a_set]
-    idx_b_minus_a.reverse()  # 先找出發生的地震的索引值，才能依序發文
+    idx_b_minus_a.reverse()  #find out the index of new earthquakes and tweet according to happening  time
 
     print(idx_b_minus_a)
 
@@ -118,16 +110,20 @@ def post_new():
         mag = df_sort['magnitude'][i]
         u = df_sort['uri'][i]
 
-        api.update_status(content + u, count)
+        api.update_status(content + u)
         print('earthquake just happened', count)
 
         post = {'time': time, 'despriction': content, 'magnitude': mag, 'uri': u}
-        collection.insert_one(post)
 
+    t.sleep(second)
 
-count = 0
-while True:
-    post_new()
-    print(count)
-    count += 1
-    time.sleep(1800)
+if __name__ == '__main__':
+    count = 0
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        f1 = executor.submit(re.reply, 10)
+        #check every 10 secs if someone reply to your tweet
+        f2 = executor.submit(post_new, 3600)
+        #check every 60 mins if there is an earthquake just happened
+
+        print(f1.result())
+        print(f2.result())
