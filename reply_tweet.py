@@ -25,23 +25,25 @@ def store_seen_id(last_seen_id, file_name):
     return
 
 def reply(second):
-    print('retrieving and replying to tweets...', flush=True)
-    last_seen_id = get_seen_id(FILE_NAME)
+    while True:
+        print('retrieving and replying to tweets...', flush=True)
+        last_seen_id = get_seen_id(FILE_NAME)
 
-    mentions = api.mentions_timeline(sinceid=last_seen_id)
-    time.sleep(second)
-    for mention in reversed(mentions):
-        print(str(mention.id) + ' - ' + mention.text, flush=True)
+        mentions = api.mentions_timeline(sinceid=last_seen_id)
 
-        store_seen_id(last_seen_id, FILE_NAME)
-        reply_to = mention.user.screen_name
+        for mention in reversed(mentions):
+            print(str(mention.id) + ' - ' + mention.text, flush=True)
 
-        if '#hola' in mention.text.lower():
-            print('found #hola', flush=True)
-            print('responding back...', flush=True)
-            message = '@' + reply_to + ' Nice to meet you!'
-            try:
-                api.update_status(message,in_reply_to_status_id = last_seen_id)
-            except Exception as e:
-                print(e)
-                pass
+            store_seen_id(last_seen_id, FILE_NAME)
+            reply_to = mention.user.screen_name
+
+            if '#hola' in mention.text.lower():
+                print('found #hola', flush=True)
+                print('responding back...', flush=True)
+                message = '@' + reply_to + ' Nice to meet you!'
+                try:
+                    api.update_status(message,in_reply_to_status_id = last_seen_id)
+                except Exception as e:
+                    print(e)
+                    pass
+        time.sleep(second)

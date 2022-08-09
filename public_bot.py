@@ -1,3 +1,10 @@
+import pymongo
+#set up environment to connect with mongoDB database
+client = pymongo.MongoClient("mongodb+srv://i")
+db = client.earthquake
+collection = db['all_earthquake']
+
+
 import concurrent.futures
 import requests
 import tweepy
@@ -81,45 +88,49 @@ def read_my_tweet():
     return posted
 
 def post_new(second):
+    while True:
+        posted = read_my_tweet()
 
-    posted = read_my_tweet()
+        df = load()
 
-    df = load()
+        df['time'] = pd.to_datetime(df['time'])  # 轉換為了要排序
+        df_sort = df.sort_values('time', ascending=False).reset_index(drop=True)
+        des = df_sort['despriction'][:6]  # 比較最近六筆資料
 
-    df['time'] = pd.to_datetime(df['time'])  # 轉換為了要排序
-    df_sort = df.sort_values('time', ascending=False).reset_index(drop=True)
-    des = df_sort['despriction'][:6]  # 比較最近六筆資料
+        all_des = []
+        for i in des:
+            a = i[:11]
+            all_des.append(a)
 
-    all_des = []
-    for i in des:
-        a = i[:11]
-        all_des.append(a)
+        print("資料上最新")
+        print(all_des, end="\n ")
 
-    print("資料上最新")
-    print(all_des, end="\n ")
+        #compare the data in the API with recent tweet we just sent. If found new earthquake then tweet the new information
+        a_set = set(posted)
+        idx_b_minus_a = [idx for idx, val in enumerate(all_des) if val not in a_set]
+        idx_b_minus_a.reverse()  #find out the index of new earthquakes and tweet according to happening  time
 
-    a_set = set(posted)
-    idx_b_minus_a = [idx for idx, val in enumerate(all_des) if val not in a_set]
-    idx_b_minus_a.reverse()  #find out the index of new earthquakes and tweet according to happening  time
+        print(idx_b_minus_a)
 
-    print(idx_b_minus_a)
+        for i in idx_b_minus_a:
+            time = df_sort['time'][i]
+            content = df_sort['despriction'][i]
+            mag = df_sort['magnitude'][i]
+            u = df_sort['uri'][i]
 
-    for i in idx_b_minus_a:
-        time = df_sort['time'][i]
-        content = df_sort['despriction'][i]
-        mag = df_sort['magnitude'][i]
-        u = df_sort['uri'][i]
+            api.update_status(content + u)
+            print('earthquake just happened', count)
 
-        api.update_status(content + u)
-        print('earthquake just happened', count)
 
-        post = {'time': time, 'despriction': content, 'magnitude': mag, 'uri': u}
-
+            #at the same time, load data into database
+            post = {'time': time, 'despriction': content, 'magnitude': mag, 'uri': u}
+            collection.insert_one(post)
     t.sleep(second)
 
 if __name__ == '__main__':
-    count = 0
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        count = 0
         f1 = executor.submit(re.reply, 10)
         #check every 10 secs if someone reply to your tweet
         f2 = executor.submit(post_new, 3600)
