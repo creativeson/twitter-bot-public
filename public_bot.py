@@ -11,18 +11,22 @@ import tweepy
 import pandas as pd
 import reply_tweet as re
 import time as t
+from dotenv import load_dotenv
+import os
 
-api_key = 'AR92E'
-api_key_secret = 'snwd'
-access_token = 'ZfyK'
-access_token_secret = '2kTCF'
+API_KEY = os.getenv("API_KEY")
+API_KEY_SECRET = os.getenv("api_key_secret")
+ACCESS_TOKEN = os.getenv("access_token")
+ACCESS_TOKEN_SECRET =os.getenv("access_token_secret")
 
-auth = tweepy.OAuthHandler(api_key, api_key_secret)
-auth.set_access_token(access_token, access_token_secret)
+auth = tweepy.OAuthHandler(API_KEY, API_KEY_SECRET)
+auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 api = tweepy.API(auth, wait_on_rate_limit=True)
+OPENDATA_KEY = os.getenv("opendata_key")
 
-big = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore'
-small = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore'
+big = f'https://opendata.cwb.gov.tw/api/v1/rest/datastore/E-A0015-001?Authorization={OPENDATA_KEY}'
+small = f'https://opendata.cwb.gov.tw/api/v1/rest/datastore/E-A0016-001?Authorization={OPENDATA_KEY}'
+
 
 def load():
     # get data from opendata api
